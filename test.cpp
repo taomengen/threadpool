@@ -4,8 +4,9 @@
 int main(int argc, char* argv[])
 {
 	ThreadPool pool;
+
 	std::thread t1([&pool]{
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 20; i++)
 		{
 			auto id = this_thread::get_id();
 			pool.AddTask([id]{
@@ -15,7 +16,7 @@ int main(int argc, char* argv[])
 	});
 
 	std::thread t2([&pool]{
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 20; i++)
 		{
 			auto id = this_thread::get_id();
 			pool.AddTask([id]{
@@ -24,9 +25,14 @@ int main(int argc, char* argv[])
 		}
 	});
 
-	this_thread::sleep_for(std::chrono::seconds(2));
+	//this_thread::sleep_for(std::chrono::seconds(3));
+
 	getchar();
-	pool.Stop();
+
 	t1.join();
 	t2.join();
+
+	pool.Stop();
+
+	return 0;
 }

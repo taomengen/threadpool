@@ -1,19 +1,25 @@
 #include "threadpool.h"
 
-void ThreadPool::Stop()
+//参数默认值放在声明中，初始化列表放在实现中
+ThreadPool::ThreadPool(int numThreads) : m_syncqueue(MaxTaskCount)
 {
-	//保证多线程情况下只调用一次StopThreadGroup
-	std::call_once(m_flag, [this]{StopThreadGroup();});
+	cout << "numThreads = " << std::thread::hardware_concurrency() << endl;
+	Start(numThreads);
 }
 
-void ThreadPool::AddTask(Task&&task)
+ThreadPool::~ThreadPool()
 {
-	m_queue.Put(std::forward<Task>(task));
+	Stop();	
+}
+
+void ThreadPool::AddTask(Task &&task)
+{
+	m_syncqueue.Put(std::forward<Task>(task));
 }
 
 void ThreadPool::AddTask(const Task &task)
 {
-	m_queue.Put(task);
+	m_syncqueue.Put(task);
 }
 
 void ThreadPool::Start(int numThreads)
@@ -32,7 +38,9 @@ void ThreadPool::RunInThread()
 	{
 		//取任务分别执行
 		std::list<Task> list;
-		m_queue.Take(list);
+		m_syncqueue.Get(list);
+
+		cout << "m_syncqueue.Get(list) list.size() = " << list.size() << endl;
 
 		for (auto &task: list)
 		{
@@ -45,11 +53,20 @@ void ThreadPool::RunInThread()
 	}
 }
 
+void ThreadPool::Stop()
+{
+	//停止
+	m_running = false;
+
+	//保证多线程情况下只调用一次StopThreadGroup
+	std::call_once(m_flag, [this]{StopThreadGroup();});
+}
+
 void ThreadPool::StopThreadGroup()
 {
-	m_queue.Stop(); //让同步队列中的线程停止
-	m_running = false; //让内部线程跳出循环并退出
-
+	//停止同步队列中的线程
+	m_syncqueue.Stop();    
+	
 	// 等待线程结束
 	for (auto thread : m_threadgroup)
 	{

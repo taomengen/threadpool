@@ -9,20 +9,30 @@
 
 using namespace std;
 
+//类模板不能将声明和实现分离在两个文件中
 template<typename T>
 class SyncQueue
 {
 public:
-	SyncQueue(int maxSize):m_maxSize(maxSize), m_needStop(false){}
+	SyncQueue(int maxSize) : m_maxSize(maxSize), m_needStop(false)
+	{
+		cout << "SyncQueue Construction" << endl;
+		cout << "m_maxSize = " << m_maxSize << endl;
+	}
+	~SyncQueue()
+	{
+		cout << "SyncQueue Destruction" << endl;
+	}
+
 	void Put(const T &x)
 	{
 		Add(x);
 	}
-	void Put(T&&x)
+	void Put(T &&x)
 	{
 		Add(std::forward<T>(x));
 	}
-	void Take(std::list<T> &list)
+	void Get(std::list<T> &list)
 	{
 		std::unique_lock<std::mutex> locker(m_mutex);
 		m_notEmpty.wait(locker, [this]{return m_needStop || NotEmpty();});
@@ -34,7 +44,7 @@ public:
 		list = std::move(m_queue);
 		m_notFull.notify_one();
 	}
-	void Take(T &t)
+	void Get(T &t)
 	{
 		std::unique_lock<std::mutex> locker(m_mutex);
 		m_notEmpty.wait(locker, [this]{return m_needStop || NotEmpty();});
@@ -75,7 +85,7 @@ public:
 	{
 		return m_queue.size();
 	}
-private:
+//private:
 	bool NotFull() const
 	{
 		bool full = m_queue.size() >= m_maxSize;
@@ -90,7 +100,7 @@ private:
 		bool empty = m_queue.empty();
 		if (empty)
 		{
-			cout << "缓冲区空了，需要等待,异步层的线程ID:" << this_thread::get_id() << endl;
+			cout << "缓冲区空了，需要等待" << endl;
 		}
 		return !empty;
 	}
