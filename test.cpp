@@ -3,36 +3,33 @@
 
 int main(int argc, char* argv[])
 {
-	ThreadPool pool;
+	ThreadPool threadpool;
 
-	std::thread t1([&pool]{
+	std::thread t1([&threadpool](){
 		for (int i = 0; i < 20; i++)
 		{
-			auto id = this_thread::get_id();
-			pool.AddTask([id]{
-				cout << "同步线程1的线程ID:" << id << endl;
+			auto id = std::this_thread::get_id();
+			threadpool.AddTask([id](){
+				std::cout << "同步线程1的线程ID:" << id << std::endl;
 			});
 		}
 	});
 
-	std::thread t2([&pool]{
+	std::thread t2([&threadpool](){
 		for (int i = 0; i < 20; i++)
 		{
-			auto id = this_thread::get_id();
-			pool.AddTask([id]{
-				cout << "同步线程2的线程ID:" << id << endl;
+			auto id = std::this_thread::get_id();
+			threadpool.AddTask([id](){
+				std::cout << "同步线程2的线程ID:" << id << std::endl;
 			});
 		}
 	});
 
-	//this_thread::sleep_for(std::chrono::seconds(3));
 
 	getchar();
 
 	t1.join();
 	t2.join();
-
-	pool.Stop();
 
 	return 0;
 }
