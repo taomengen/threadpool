@@ -7,12 +7,12 @@
 #include <condition_variable>
 #include <iostream>
 
-//类模板不能将声明和实现分离在两个文件中
+//类模板不能将声明和实现分开在两个文件中
 template<typename T>
 class SyncQueue
 {
 public:
-	SyncQueue(int maxSize) : m_maxSize(maxSize), m_stop(false)
+	SyncQueue(int maxSize) : m_maxSize(maxSize), m_stopRun(false)
 	{
 		std::cout << "SyncQueue Construction" << std::endl;
 	}
@@ -21,28 +21,28 @@ public:
 		std::cout << "SyncQueue Destruction" << std::endl;
 	}
 
-	void Put(const T&x)
+	void Put(const T&t)
 	{
-		Add(x);
+		Add(t);
 	}
-	void Put(T&&x)
+	void Put(T&&t)
 	{
-		Add(std::forward<T>(x));
+		Add(std::forward<T>(t));
 	}
 
 	template<typename F>
-	void Add(F&&x)
+	void Add(F&&f)
 	{
 		std::unique_lock<std::mutex> locker(m_mutex);
 		m_notFull.wait(locker, [this](){
-			return m_stop || NotFull();
+			return m_stopRun || NotFull();
 		});
 		
-		if (m_stop)
+		if (m_stopRun)
 		{
 			return;
 		}
-		m_list.push_back(std::forward<F>(x));
+		m_list.push_back(std::forward<F>(f)); 
 		m_notEmpty.notify_one();
 	}
 
@@ -51,10 +51,10 @@ public:
 	{
 		std::unique_lock<std::mutex> locker(m_mutex);
 		m_notEmpty.wait(locker, [this](){
-			return m_stop || NotEmpty();
+			return m_stopRun || NotEmpty();
 		});
 
-		if (m_stop)
+		if (m_stopRun)
 		{
 			return;
 		}
@@ -67,10 +67,10 @@ public:
 	{
 		std::unique_lock<std::mutex> locker(m_mutex);
 		m_notEmpty.wait(locker, [this](){
-			return m_stop || NotEmpty();
+			return m_stopRun || NotEmpty();
 		});
 
-		if (m_stop)
+		if (m_stopRun)
 		{
 			return;
 		}
@@ -115,7 +115,7 @@ public:
 		{
 			std::lock_guard<std::mutex> locker(m_mutex);
 			//同步队列停止
-			m_stop = true;
+			m_stopRun = true;
 		}
 		m_notFull.notify_all();
 		m_notEmpty.notify_all();
@@ -125,14 +125,18 @@ public:
 private:
 
 	std::list<T>            m_list;      // 缓冲区
-
 	// 互斥量和条件变量结合起来使用
 	std::mutex              m_mutex;     //　互斥量  
 	std::condition_variable m_notEmpty;  // 不为空的条件变量
 	std::condition_variable m_notFull;   // 不为满的条件变量
 
-	int   m_maxSize;   // 同步队列的最大值
-	bool  m_stop;      // 同步队列是否停止
+	// 同步队列的最大值
+	int   m_maxSize;   
+
+	// 同步队列是否停止 
+	// TRUE表示同步队列停止运行
+	// FALSE表示同步队列没有停止运行
+	bool  m_stopRun;      
 };
 
 #endif

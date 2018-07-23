@@ -1,5 +1,6 @@
 #include "threadpool.h"
 #include "syncqueue.h"
+#include <sys/time.h>
 
 int main(int argc, char* argv[])
 {
@@ -10,8 +11,8 @@ int main(int argc, char* argv[])
 		{
 			auto id = std::this_thread::get_id();
 			threadpool.AddTask([id](){
-				std::cout << "同步线程1的线程ID:" << id << std::endl;
-			});
+				std::cout << "同步线程1的线程ID:" << id << std::endl;	
+		    });
 		}
 	});
 

@@ -1,4 +1,4 @@
-test:test.cpp syncqueue.h threadpool.h threadpool.cpp
-	g++ -o test -std=c++11 test.cpp syncqueue.h threadpool.h threadpool.cpp -g -lpthread
+test:test.cpp threadpool.cpp
+	g++ -o test -std=c++11 test.cpp threadpool.cpp -g -pthread
 clean:
 	rm test	

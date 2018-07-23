@@ -1,5 +1,5 @@
-#ifndef THREADPOLL_H
-#define THREADPOLL_H
+#ifndef THREADPOOL_H
+#define THREADPOOL_H
 
 #include <list>
 #include <thread>
@@ -20,23 +20,22 @@ public:
 	ThreadPool(int numThreads = std::thread::hardware_concurrency());
 	~ThreadPool(void);
 	
+	
+	
+	void CreateThreadGroup(int numThreads);
+	void Function();
 	void AddTask(Task&&task);
 	void AddTask(const Task &task);
-	void Function();
-	void StopThreadGroup();
+	void DestroyThreadGroup();
 
 private:
 
 	//容器对象
 	std::list<std::shared_ptr<std::thread>>  m_threadgroup; //线程组
-
 	//模板类对象
 	SyncQueue<Task>    m_syncqueue;          //同步队列
-
 	std::atomic_bool   m_threadpool_alive;   //线程池是否活着
-
 	std::once_flag     m_flag;               //只调用一次的标志
-
 };
 
 #endif
